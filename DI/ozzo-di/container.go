@@ -171,6 +171,7 @@ func (c *container) RegisterAs(val interface{}, t reflect.Type) {
 }
 
 func (c *container) RegisterProvider(p Provider, t reflect.Type, shared bool) {
+	//
 	c.values[t] = providerBinding{p, shared}
 }
 
@@ -200,6 +201,14 @@ func (c *container) Make(t reflect.Type) interface{} {
 func (c *container) Inject(val interface{}) {
 	c.inject(reflect.ValueOf(val))
 }
+
+// ======
+// ===============
+// ===========================
+// =======================================    basic
+// ===========================
+// ===============
+// ======
 
 func (c *container) build(t reflect.Type) reflect.Value {
 	if val, ok := c.values[t]; ok {
