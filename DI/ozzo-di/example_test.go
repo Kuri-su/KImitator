@@ -34,16 +34,19 @@ type MyBar struct {
 
 func Example() {
 	// creating a DI container
-	c := di.NewContainer()
+	diContainer := di.NewContainer()
 
 	// register a Foo instance as the Bar interface type
-	c.RegisterAs(&Foo{"hello"}, di.InterfaceOf((*Bar)(nil)))
+	diContainer.RegisterAs(
+		&Foo{"hello"},
+		di.InterfaceOf((*Bar)(nil)),
+	)
 
 	// &Foo{"hello"} will be injected as the Bar parameter for test()
-	c.Call(test)
+	diContainer.Call(test)
 
 	// create a MyBar object and inject its Bar field
-	bar := c.Make(reflect.TypeOf(&MyBar{})).(Bar)
+	bar := diContainer.Make(reflect.TypeOf(&MyBar{})).(Bar)
 	fmt.Println(bar.String() + "2")
 
 	// Output:
