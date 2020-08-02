@@ -1,0 +1,8 @@
+# 文件路径 demo/overlays/staging/map.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: the-map
+data:
+  altGreeting: "Have a pineapple!"
+  enableRisky: "true"
