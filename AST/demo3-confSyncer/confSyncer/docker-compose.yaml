@@ -1,0 +1,7 @@
+version: "3"
+service:
+  confsyncer:
+    image: kurisux/conf-syncer:latest
+    restart: always
+    volumes:
+    - ~/.confsyncer/config.yaml:~/.confsyncer/config.yaml

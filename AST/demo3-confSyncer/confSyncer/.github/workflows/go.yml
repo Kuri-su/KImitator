@@ -1,0 +1,23 @@
+name: Go-ci
+on: [push, pull_request]
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        go-version: [ 1.14.x]
+        platform: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: Build
+        run: |
+          ls -al
+          pwd
+          make buildall
+
