@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -15,7 +16,7 @@ func main() {
 		log.Println(err)
 		return
 	}
-
+	fmt.Println(f)
 }
 
 type Visitor struct {
