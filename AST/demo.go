@@ -16,7 +16,6 @@ import (
 
 // main 方法
 func main() {
-	a := 1
 }
 
 func A() {
