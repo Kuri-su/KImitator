@@ -10,7 +10,13 @@ import (
 	"strings"
 )
 
-//type TODO
+var Result = struct {
+Imports []string
+	
+ModDeps []string
+	
+}
+
 
 func main() {
 	GomodParseDemo()
@@ -34,12 +40,18 @@ func GofileParseDemo() {
 			if !CheckImportIsHimSelf(impo.Path.Value) {
 				continue
 			}
+
+			// TODO 排除 標準庫
+			
+			Result.Import = append(Result.Import, impo.Ppath.Value)
+			
 		}
 
 		fmt.Println(f)
 		fmt.Println(file)
 	}
 
+	// TODO 去重
 }
 
 // 去获取 项目层面 的 依赖
