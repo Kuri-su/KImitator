@@ -11,9 +11,9 @@ import (
 )
 
 var Result = struct {
-Imports []string
+	Imports []string{}
 	
-ModDeps []string
+	ModDeps []string{}
 	
 }
 
@@ -41,7 +41,7 @@ func GofileParseDemo() {
 				continue
 			}
 
-			// TODO 排除 標準庫
+			// TODO(delay) 排除 標準庫 
 			
 			Result.Import = append(Result.Import, impo.Ppath.Value)
 			
@@ -51,7 +51,7 @@ func GofileParseDemo() {
 		fmt.Println(file)
 	}
 
-	// TODO 去重
+	// TODO 去重 output
 }
 
 // 去获取 项目层面 的 依赖
