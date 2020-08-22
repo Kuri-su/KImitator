@@ -10,9 +10,11 @@ import (
 	"strings"
 )
 
+//type TODO
+
 func main() {
+	GomodParseDemo()
 	GofileParseDemo()
-	//GomodParseDemo()
 
 }
 
@@ -26,6 +28,12 @@ func GofileParseDemo() {
 		f, err := parser.ParseFile(token.NewFileSet(), file, nil, parser.AllErrors)
 		if err != nil {
 			panic(err)
+		}
+
+		for _, impo := range f.Imports {
+			if !CheckImportIsHimSelf(impo.Path.Value) {
+				continue
+			}
 		}
 
 		fmt.Println(f)
@@ -48,10 +56,13 @@ func GomodParseDemo() {
 		panic(err)
 	}
 
+	GoModPackageName = lax.Module.Mod.Path
+
 	for _, require := range lax.Require {
 		fmt.Println(require.Mod.Path, require.Mod.Version)
 	}
 }
+
 func GetAllFiles(dirPth string) (files []string, err error) {
 	var dirs []string
 	dir, err := ioutil.ReadDir(dirPth)
