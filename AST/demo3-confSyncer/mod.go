@@ -2,30 +2,35 @@ package main
 
 import (
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"go/parser"
 	"go/token"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
 var Result = struct {
-	Imports []string{}
-	
-	ModDeps []string{}
-	
+	Imports map[string]bool
+	ModDeps []module.Version
+}{
+	Imports: make(map[string]bool),
 }
 
+var (
+	pkgDir   = "/home/kurisucode/myRepo/KImitator-and-studies/AST/demo3-confSyncer/confSyncer"
+	pkgGoMod = "/home/kurisucode/myRepo/KImitator-and-studies/AST/demo3-confSyncer/confSyncer/go.mod"
+)
 
 func main() {
 	GomodParseDemo()
 	GofileParseDemo()
-
 }
 
 func GofileParseDemo() {
-	var filename = "/home/kurisucode/myRepo/KImitator-and-studies/AST/demo3-confSyncer/confSyncer"
+	var filename = pkgDir
 	files, err := GetAllFiles(filename)
 	if err != nil {
 		panic(err)
@@ -37,26 +42,37 @@ func GofileParseDemo() {
 		}
 
 		for _, impo := range f.Imports {
-			if !CheckImportIsHimSelf(impo.Path.Value) {
+			importPkg := impo.Path.Value
+			importPkg = string(importPkg[1 : len(importPkg)-1])
+
+			if !CheckImportIsHimSelf(importPkg) {
 				continue
 			}
 
-			// TODO(delay) 排除 標準庫 
-			
-			Result.Import = append(Result.Import, impo.Ppath.Value)
-			
+			if _, ok := packages[importPkg]; ok {
+				continue
+			}
+
+			if _, ok := Result.Imports[importPkg]; !ok {
+				Result.Imports[importPkg] = true
+			}
+
 		}
 
-		fmt.Println(f)
-		fmt.Println(file)
 	}
 
-	// TODO 去重 output
+	marshal, err := jsoniter.Marshal(Result)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(marshal))
+
 }
 
 // 去获取 项目层面 的 依赖
 func GomodParseDemo() {
-	var filename = "/home/kurisucode/myRepo/KImitator-and-studies/AST/demo3-confSyncer/confSyncer/go.mod"
+	var filename = pkgGoMod
 
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -71,7 +87,7 @@ func GomodParseDemo() {
 	GoModPackageName = lax.Module.Mod.Path
 
 	for _, require := range lax.Require {
-		fmt.Println(require.Mod.Path, require.Mod.Version)
+		Result.ModDeps = append(Result.ModDeps, require.Mod)
 	}
 }
 
