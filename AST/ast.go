@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -17,6 +18,8 @@ func main() {
 		return
 	}
 	fmt.Println(f)
+
+	context.WithCancel(nil)
 }
 
 type Visitor struct {
