@@ -51,6 +51,7 @@ func newConfig(opts ...Option) Config {
 		vals: vals,
 	}
 
+	// ???
 	go c.run()
 
 	return c
@@ -188,6 +189,8 @@ func (c *config) Load(sources ...source.Source) error {
 		return err
 	}
 
+	// 更新 Snapshot
+	// 并且把 真正 用于 解析的 对象收到 opt 中
 	snap, err := c.opts.Loader.Snapshot()
 	if err != nil {
 		return err
@@ -196,6 +199,8 @@ func (c *config) Load(sources ...source.Source) error {
 	c.Lock()
 	defer c.Unlock()
 
+	// 更新 Reader 的 snap, 是否增量更姓由 Source 决定
+	// 把外部需要关心和使用的 对象放到外面来
 	c.snap = snap
 	vals, err := c.opts.Reader.Values(snap.ChangeSet)
 	if err != nil {
@@ -225,6 +230,9 @@ func (c *config) Watch(path ...string) (Watcher, error) {
 func (c *config) String() string {
 	return "config"
 }
+
+// ============================================
+// ============================================ watcher
 
 func (w *watcher) Next() (reader.Value, error) {
 	for {

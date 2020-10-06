@@ -378,18 +378,19 @@ func (r *rpcClient) next(request Request, opts CallOptions) (selector.Next, erro
 }
 
 func (r *rpcClient) Call(ctx context.Context, request Request, response interface{}, opts ...CallOption) error {
-	// make a copy of call opts
+	// make a copy of call opts 复制一份 options 并 应用
 	callOpts := r.opts.CallOptions
 	for _, opt := range opts {
 		opt(&callOpts)
 	}
 
+	// 这个时候 已经从 服务中心获取到 服务列表, 等待 访问的时候 random 一次
 	next, err := r.next(request, callOpts)
 	if err != nil {
 		return err
 	}
 
-	// check if we already have a deadline
+	// check if we already have a deadline  // 确认是否已经到达 DeadLine
 	d, ok := ctx.Deadline()
 	if !ok {
 		// no deadline so we create a new one
