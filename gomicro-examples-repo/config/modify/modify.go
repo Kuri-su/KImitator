@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 
 	"github.com/micro/go-micro/v2/config"
+	"github.com/micro/go-micro/v2/config/encoder/toml"
 	"github.com/micro/go-micro/v2/config/source"
 	"github.com/micro/go-micro/v2/config/source/file"
-	"github.com/micro/go-micro/v2/config/encoder/toml"
 )
 
 func main() {
