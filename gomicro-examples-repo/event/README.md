@@ -36,7 +36,7 @@ message Event {
 	// unix timestamp of event
 	int64 timestamp = 3;
 	// event headers
-        map<string, Pair> header = 4;
+    map<string, Pair> header = 4;
 	// the event data
 	string data = 5;
 }
