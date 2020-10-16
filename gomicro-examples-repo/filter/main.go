@@ -19,7 +19,7 @@ func main() {
 		// provide a context
 		context.TODO(),
 		// provide the request
-		&proto.HelloRequest{Name: "John"},
+		&proto.Request{Name: "John"},
 		// set the filter
 		version.Filter("latest"),
 	)
