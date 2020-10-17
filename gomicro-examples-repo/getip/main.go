@@ -11,7 +11,7 @@ import (
 
 type Greeter struct{}
 
-func (g *Greeter) Hello(ctx context.Context, req *proto.HelloRequest, rsp *proto.HelloResponse) error {
+func (g *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) error {
 	md, _ := metadata.FromContext(ctx)
 
 	// local ip of service
