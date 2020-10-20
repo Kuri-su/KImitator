@@ -58,6 +58,169 @@ func newRpcServer(opts ...Option) Server {
 	}
 }
 
+func (s *rpcServer) Start() error {
+	s.RLock()
+	if s.started {
+		s.RUnlock()
+		return nil
+	}
+	s.RUnlock()
+
+	config := s.Options()
+
+	// start listening on the transport
+	ts, err := config.Transport.Listen(config.Address)
+	if err != nil {
+		return err
+	}
+
+	log.Logf("Transport [%s] Listening on %s", config.Transport.String(), ts.Addr())
+
+	// swap address
+	s.Lock()
+	addr := s.opts.Address
+	s.opts.Address = ts.Addr()
+	s.Unlock()
+
+	// connect to the broker
+	if err := config.Broker.Connect(); err != nil {
+		return err
+	}
+
+	bname := config.Broker.String()
+
+	log.Logf("Broker [%s] Connected to %s", bname, config.Broker.Address())
+
+	// use RegisterCheck func before register
+	if err = s.opts.RegisterCheck(s.opts.Context); err != nil {
+		log.Logf("Server %s-%s register check error: %s", config.Name, config.Id, err)
+	} else {
+		// announce self to the world
+		if err = s.Register(); err != nil {
+			log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
+		}
+	}
+
+	exit := make(chan bool)
+
+	go func() {
+		for {
+			// listen for connections
+			err := ts.Accept(s.ServeConn)
+
+			// TODO: listen for messages
+			// msg := broker.Exchange(service).Consume()
+
+			select {
+			// check if we're supposed to exit
+			case <-exit:
+				return
+			// check the error and backoff
+			default:
+				if err != nil {
+					log.Logf("Accept error: %v", err)
+					time.Sleep(time.Second)
+					continue
+				}
+			}
+
+			// no error just exit
+			return
+		}
+	}()
+
+	go func() {
+		t := new(time.Ticker)
+
+		// only process if it exists
+		if s.opts.RegisterInterval > time.Duration(0) {
+			// new ticker
+			t = time.NewTicker(s.opts.RegisterInterval)
+		}
+
+		// return error chan
+		var ch chan error
+
+	Loop:
+		for {
+			select {
+			// register self on interval
+			case <-t.C:
+				s.RLock()
+				registered := s.registered
+				s.RUnlock()
+				if err = s.opts.RegisterCheck(s.opts.Context); err != nil && registered {
+					log.Logf("Server %s-%s register check error: %s, deregister it", config.Name, config.Id, err)
+					// deregister self in case of error
+					if err := s.Deregister(); err != nil {
+						log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
+					}
+				} else {
+					if err := s.Register(); err != nil {
+						log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
+					}
+				}
+			// wait for exit
+			case ch = <-s.exit:
+				t.Stop()
+				close(exit)
+				break Loop
+			}
+		}
+
+		// deregister self
+		if err := s.Deregister(); err != nil {
+			log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
+		}
+
+		s.Lock()
+		swg := s.wg
+		s.Unlock()
+
+		// wait for requests to finish
+		if swg != nil {
+			swg.Wait()
+		}
+
+		// close transport listener
+		ch <- ts.Close()
+
+		// disconnect the broker
+		config.Broker.Disconnect()
+
+		// swap back address
+		s.Lock()
+		s.opts.Address = addr
+		s.Unlock()
+	}()
+
+	// mark the server as started
+	s.Lock()
+	s.started = true
+	s.Unlock()
+
+	return nil
+}
+
+func (s *rpcServer) Stop() error {
+	s.RLock()
+	if !s.started {
+		s.RUnlock()
+		return nil
+	}
+	s.RUnlock()
+
+	ch := make(chan error)
+	s.exit <- ch
+
+	err := <-ch
+	s.Lock()
+	s.started = false
+	s.Unlock()
+
+	return err
+}
+
 // HandleEvent handles inbound messages to the service directly
 // TODO: handle requests from an event. We won't send a response.
 func (s *rpcServer) HandleEvent(e broker.Event) error {
@@ -730,169 +893,6 @@ func (s *rpcServer) Deregister() error {
 
 	s.Unlock()
 	return nil
-}
-
-func (s *rpcServer) Start() error {
-	s.RLock()
-	if s.started {
-		s.RUnlock()
-		return nil
-	}
-	s.RUnlock()
-
-	config := s.Options()
-
-	// start listening on the transport
-	ts, err := config.Transport.Listen(config.Address)
-	if err != nil {
-		return err
-	}
-
-	log.Logf("Transport [%s] Listening on %s", config.Transport.String(), ts.Addr())
-
-	// swap address
-	s.Lock()
-	addr := s.opts.Address
-	s.opts.Address = ts.Addr()
-	s.Unlock()
-
-	// connect to the broker
-	if err := config.Broker.Connect(); err != nil {
-		return err
-	}
-
-	bname := config.Broker.String()
-
-	log.Logf("Broker [%s] Connected to %s", bname, config.Broker.Address())
-
-	// use RegisterCheck func before register
-	if err = s.opts.RegisterCheck(s.opts.Context); err != nil {
-		log.Logf("Server %s-%s register check error: %s", config.Name, config.Id, err)
-	} else {
-		// announce self to the world
-		if err = s.Register(); err != nil {
-			log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
-		}
-	}
-
-	exit := make(chan bool)
-
-	go func() {
-		for {
-			// listen for connections
-			err := ts.Accept(s.ServeConn)
-
-			// TODO: listen for messages
-			// msg := broker.Exchange(service).Consume()
-
-			select {
-			// check if we're supposed to exit
-			case <-exit:
-				return
-			// check the error and backoff
-			default:
-				if err != nil {
-					log.Logf("Accept error: %v", err)
-					time.Sleep(time.Second)
-					continue
-				}
-			}
-
-			// no error just exit
-			return
-		}
-	}()
-
-	go func() {
-		t := new(time.Ticker)
-
-		// only process if it exists
-		if s.opts.RegisterInterval > time.Duration(0) {
-			// new ticker
-			t = time.NewTicker(s.opts.RegisterInterval)
-		}
-
-		// return error chan
-		var ch chan error
-
-	Loop:
-		for {
-			select {
-			// register self on interval
-			case <-t.C:
-				s.RLock()
-				registered := s.registered
-				s.RUnlock()
-				if err = s.opts.RegisterCheck(s.opts.Context); err != nil && registered {
-					log.Logf("Server %s-%s register check error: %s, deregister it", config.Name, config.Id, err)
-					// deregister self in case of error
-					if err := s.Deregister(); err != nil {
-						log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
-					}
-				} else {
-					if err := s.Register(); err != nil {
-						log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
-					}
-				}
-			// wait for exit
-			case ch = <-s.exit:
-				t.Stop()
-				close(exit)
-				break Loop
-			}
-		}
-
-		// deregister self
-		if err := s.Deregister(); err != nil {
-			log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
-		}
-
-		s.Lock()
-		swg := s.wg
-		s.Unlock()
-
-		// wait for requests to finish
-		if swg != nil {
-			swg.Wait()
-		}
-
-		// close transport listener
-		ch <- ts.Close()
-
-		// disconnect the broker
-		config.Broker.Disconnect()
-
-		// swap back address
-		s.Lock()
-		s.opts.Address = addr
-		s.Unlock()
-	}()
-
-	// mark the server as started
-	s.Lock()
-	s.started = true
-	s.Unlock()
-
-	return nil
-}
-
-func (s *rpcServer) Stop() error {
-	s.RLock()
-	if !s.started {
-		s.RUnlock()
-		return nil
-	}
-	s.RUnlock()
-
-	ch := make(chan error)
-	s.exit <- ch
-
-	err := <-ch
-	s.Lock()
-	s.started = false
-	s.Unlock()
-
-	return err
 }
 
 func (s *rpcServer) String() string {

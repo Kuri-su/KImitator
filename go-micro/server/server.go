@@ -16,14 +16,21 @@ import (
 
 // Server is a simple micro server abstraction
 type Server interface {
-	Options() Options
+	// real worker
 	Init(...Option) error
-	Handle(Handler) error
-	NewHandler(interface{}, ...HandlerOption) Handler
-	NewSubscriber(string, interface{}, ...SubscriberOption) Subscriber
-	Subscribe(Subscriber) error
 	Start() error
 	Stop() error
+
+	// about handler
+	Handle(Handler) error
+	NewHandler(interface{}, ...HandlerOption) Handler
+
+	// about subscriber
+	NewSubscriber(string, interface{}, ...SubscriberOption) Subscriber
+	Subscribe(Subscriber) error
+
+	// simply
+	Options() Options
 	String() string
 }
 
