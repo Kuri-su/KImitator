@@ -9,10 +9,13 @@ import (
 // services. It uses connection based socket send/recv semantics and
 // has various implementations; http, grpc, quic.
 type Transport interface {
+	// Actual effect
 	Init(...Option) error
-	Options() Options
 	Dial(addr string, opts ...DialOption) (Client, error)
 	Listen(addr string, opts ...ListenOption) (Listener, error)
+
+	// simple
+	Options() Options
 	String() string
 }
 
@@ -24,19 +27,24 @@ type Message struct {
 type Socket interface {
 	Recv(*Message) error
 	Send(*Message) error
+
+	// simple
 	Close() error
 	Local() string
 	Remote() string
 }
 
+// Semantics
 type Client interface {
 	Socket
 }
 
 type Listener interface {
-	Addr() string
-	Close() error
 	Accept(func(Socket)) error
+
+	// simple
+	Close() error
+	Addr() string
 }
 
 type Option func(*Options)

@@ -25,21 +25,28 @@ import (
 )
 
 type rpcServer struct {
+	// kn: opts
+	opts Options
+	// kn: router
 	router *router
-	exit   chan chan error
 
-	sync.RWMutex
-	opts        Options
+	// kn: handler and sucscriber
 	handlers    map[string]Handler
 	subscribers map[Subscriber][]broker.Subscriber
+	subscriber  broker.Subscriber // subscribe to service name
+	// kn: TODO:  what's the different about 'subscribers' and 'subscriber'
+
+	// kn: stat
 	// marks the serve as started
 	started bool
 	// used for first registration
 	registered bool
-	// subscribe to service name
-	subscriber broker.Subscriber
+
+	// rw mutex
+	sync.RWMutex
 	// graceful exit
-	wg *sync.WaitGroup
+	wg   *sync.WaitGroup
+	exit chan chan error
 }
 
 func newRpcServer(opts ...Option) Server {
@@ -60,21 +67,24 @@ func newRpcServer(opts ...Option) Server {
 
 func (s *rpcServer) Start() error {
 	s.RLock()
+	// kn: add RLock(rwlock) why multi goroutine call 'Start' function
 	if s.started {
 		s.RUnlock()
 		return nil
 	}
 	s.RUnlock()
 
-	config := s.Options()
+	// kn: copy a opt
+	srvOpt := s.Options()
 
+	// kn: 1. start Transport
 	// start listening on the transport
-	ts, err := config.Transport.Listen(config.Address)
+	ts, err := srvOpt.Transport.Listen(srvOpt.Address)
 	if err != nil {
 		return err
 	}
 
-	log.Logf("Transport [%s] Listening on %s", config.Transport.String(), ts.Addr())
+	log.Logf("Transport [%s] Listening on %s", srvOpt.Transport.String(), ts.Addr())
 
 	// swap address
 	s.Lock()
@@ -82,22 +92,24 @@ func (s *rpcServer) Start() error {
 	s.opts.Address = ts.Addr()
 	s.Unlock()
 
+	// kn: 2. start broker
 	// connect to the broker
-	if err := config.Broker.Connect(); err != nil {
+	if err := srvOpt.Broker.Connect(); err != nil {
 		return err
 	}
 
-	bname := config.Broker.String()
+	bname := srvOpt.Broker.String()
 
-	log.Logf("Broker [%s] Connected to %s", bname, config.Broker.Address())
+	log.Logf("Broker [%s] Connected to %s", bname, srvOpt.Broker.Address())
 
+	// kn: TODO: why it should register check
 	// use RegisterCheck func before register
 	if err = s.opts.RegisterCheck(s.opts.Context); err != nil {
-		log.Logf("Server %s-%s register check error: %s", config.Name, config.Id, err)
+		log.Logf("Server %s-%s register check error: %s", srvOpt.Name, srvOpt.Id, err)
 	} else {
 		// announce self to the world
 		if err = s.Register(); err != nil {
-			log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
+			log.Logf("Server %s-%s register error: %s", srvOpt.Name, srvOpt.Id, err)
 		}
 	}
 
@@ -150,14 +162,14 @@ func (s *rpcServer) Start() error {
 				registered := s.registered
 				s.RUnlock()
 				if err = s.opts.RegisterCheck(s.opts.Context); err != nil && registered {
-					log.Logf("Server %s-%s register check error: %s, deregister it", config.Name, config.Id, err)
+					log.Logf("Server %s-%s register check error: %s, deregister it", srvOpt.Name, srvOpt.Id, err)
 					// deregister self in case of error
 					if err := s.Deregister(); err != nil {
-						log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
+						log.Logf("Server %s-%s deregister error: %s", srvOpt.Name, srvOpt.Id, err)
 					}
 				} else {
 					if err := s.Register(); err != nil {
-						log.Logf("Server %s-%s register error: %s", config.Name, config.Id, err)
+						log.Logf("Server %s-%s register error: %s", srvOpt.Name, srvOpt.Id, err)
 					}
 				}
 			// wait for exit
@@ -170,7 +182,7 @@ func (s *rpcServer) Start() error {
 
 		// deregister self
 		if err := s.Deregister(); err != nil {
-			log.Logf("Server %s-%s deregister error: %s", config.Name, config.Id, err)
+			log.Logf("Server %s-%s deregister error: %s", srvOpt.Name, srvOpt.Id, err)
 		}
 
 		s.Lock()
@@ -186,7 +198,7 @@ func (s *rpcServer) Start() error {
 		ch <- ts.Close()
 
 		// disconnect the broker
-		config.Broker.Disconnect()
+		srvOpt.Broker.Disconnect()
 
 		// swap back address
 		s.Lock()

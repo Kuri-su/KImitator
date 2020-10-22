@@ -85,7 +85,9 @@ type router struct {
 
 // rpcRouter encapsulates functions that become a server.Router
 type rpcRouter struct {
-	h func(context.Context, Request, interface{}) error
+	// handler
+	h func(ctx context.Context, req Request, rsp interface{}) error
+	// subscribe message process
 	m func(context.Context, Message) error
 }
 

@@ -35,6 +35,7 @@ type Server interface {
 }
 
 // Router handle serving messages
+// unique http server
 type Router interface {
 	// ProcessMessage processes a message
 	ProcessMessage(context.Context, Message) error
