@@ -57,8 +57,8 @@ func (p *profiler) Start() error {
 	memFile := filepath.Join("/", "mem.pprof")
 
 	if len(p.opts.Name) > 0 {
-		cpuFile = filepath.Join("/tmp", p.opts.Name+".cpu.pprof")
-		memFile = filepath.Join("/tmp", p.opts.Name+".mem.pprof")
+		cpuFile = filepath.Join("/", p.opts.Name+".cpu.pprof")
+		memFile = filepath.Join("/", p.opts.Name+".mem.pprof")
 	}
 
 	f1, err := os.Create(cpuFile)
