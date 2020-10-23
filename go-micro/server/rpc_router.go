@@ -192,6 +192,7 @@ func prepareMethod(method reflect.Method) *methodType {
 	return &methodType{method: method, ArgType: argType, ReplyType: replyType, ContextType: contextType, stream: stream}
 }
 
+// sendResponse
 func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
 	msg := new(codec.Message)
 	msg.Type = codec.Response
@@ -206,6 +207,7 @@ func (router *router) sendResponse(sending sync.Locker, req *request, reply inte
 	return err
 }
 
+// call
 func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex, mtype *methodType, req *request, argv, replyv reflect.Value, cc codec.Writer) error {
 	defer router.freeRequest(req)
 
@@ -287,6 +289,7 @@ func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex,
 	return fn(ctx, r, rawStream)
 }
 
+// prepareContext
 func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
 	if contextv := reflect.ValueOf(ctx); contextv.IsValid() {
 		return contextv
@@ -294,6 +297,7 @@ func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
 	return reflect.Zero(m.ContextType)
 }
 
+// getRequest
 func (router *router) getRequest() *request {
 	router.reqLock.Lock()
 	req := router.freeReq
@@ -307,6 +311,7 @@ func (router *router) getRequest() *request {
 	return req
 }
 
+// freeRequest
 func (router *router) freeRequest(req *request) {
 	router.reqLock.Lock()
 	req.next = router.freeReq
@@ -314,6 +319,7 @@ func (router *router) freeRequest(req *request) {
 	router.reqLock.Unlock()
 }
 
+// getResponse
 func (router *router) getResponse() *response {
 	router.respLock.Lock()
 	resp := router.freeResp
@@ -327,6 +333,7 @@ func (router *router) getResponse() *response {
 	return resp
 }
 
+// freeResponse
 func (router *router) freeResponse(resp *response) {
 	router.respLock.Lock()
 	resp.next = router.freeResp
@@ -334,6 +341,7 @@ func (router *router) freeResponse(resp *response) {
 	router.respLock.Unlock()
 }
 
+// readRequest
 func (router *router) readRequest(r Request) (service *service, mtype *methodType, req *request, argv, replyv reflect.Value, keepReading bool, err error) {
 	cc := r.Codec()
 
@@ -374,6 +382,7 @@ func (router *router) readRequest(r Request) (service *service, mtype *methodTyp
 	return
 }
 
+// readHeader
 func (router *router) readHeader(cc codec.Reader) (service *service, mtype *methodType, req *request, keepReading bool, err error) {
 	// Grab the request header.
 	msg := new(codec.Message)
@@ -415,10 +424,12 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 	return
 }
 
+// NewHandler
 func (router *router) NewHandler(h interface{}, opts ...HandlerOption) Handler {
 	return newRpcHandler(h, opts...)
 }
 
+// Handle
 func (router *router) Handle(h Handler) error {
 	router.mu.Lock()
 	defer router.mu.Unlock()
@@ -464,6 +475,7 @@ func (router *router) Handle(h Handler) error {
 	return nil
 }
 
+// ServeRequest
 func (router *router) ServeRequest(ctx context.Context, r Request, rsp Response) error {
 	sending := new(sync.Mutex)
 	service, mtype, req, argv, replyv, keepReading, err := router.readRequest(r)
@@ -480,10 +492,12 @@ func (router *router) ServeRequest(ctx context.Context, r Request, rsp Response)
 	return service.call(ctx, router, sending, mtype, req, argv, replyv, rsp.Codec())
 }
 
+// NewSubscriber
 func (router *router) NewSubscriber(topic string, handler interface{}, opts ...SubscriberOption) Subscriber {
 	return newSubscriber(topic, handler, opts...)
 }
 
+// Subscribe
 func (router *router) Subscribe(s Subscriber) error {
 	sub, ok := s.(*subscriber)
 	if !ok {
@@ -508,6 +522,7 @@ func (router *router) Subscribe(s Subscriber) error {
 	return nil
 }
 
+// ProcessMessage
 func (router *router) ProcessMessage(ctx context.Context, msg Message) error {
 	var err error
 

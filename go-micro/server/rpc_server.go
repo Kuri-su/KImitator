@@ -74,10 +74,10 @@ func (s *rpcServer) Start() error {
 	}
 	s.RUnlock()
 
-	// kn: copy a opt
+	// kn: copy a optiton
 	srvOpt := s.Options()
 
-	// kn: 1. start Transport
+	// kn: 1. just listen Transport
 	// start listening on the transport
 	ts, err := srvOpt.Transport.Listen(srvOpt.Address)
 	if err != nil {
@@ -115,6 +115,7 @@ func (s *rpcServer) Start() error {
 
 	exit := make(chan bool)
 
+	// kn: registry func to transport accept
 	go func() {
 		for {
 			// listen for connections
@@ -141,6 +142,7 @@ func (s *rpcServer) Start() error {
 		}
 	}()
 
+	// kn: registry keep alive
 	go func() {
 		t := new(time.Ticker)
 
@@ -668,6 +670,7 @@ func (s *rpcServer) Subscribe(sb Subscriber) error {
 	return nil
 }
 
+// kn: server.registry  registry
 func (s *rpcServer) Register() error {
 	var err error
 	var advt, host, port string
