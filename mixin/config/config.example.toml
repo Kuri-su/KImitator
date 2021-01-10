@@ -1,0 +1,34 @@
+[node]
+# the private spend key of the signer
+signer-key = "56a7904a2dfd71c397bb48584033d8cb6ddcde9b46b7d91f07d2ede061723a0b"
+# limit the peers that can establish a connection and exchange snapshots
+consensus-only = false
+# the period in seconds to check some mint and election kernel opportunities
+kernel-operation-period = 700
+# the maximum cache size in MB
+memory-cache-size = 16384
+# how many seconds to keep unconfirmed transactions in the cache storage
+# this also limits the confirmed snapshots finalization cache to peer
+cache-ttl = 7200
+
+[storage]
+# enable value log gc will reduce disk storage usage
+value-log-gc = true
+# whether value log files should be truncated to delete corrupt data, if any.
+truncate = false
+
+[network]
+# the public endpoint to receive peer packets, may be a proxy or load balancer
+# must be a public reachable domain or IP, and the port allowed by firewall
+listener = "35.227.72.6:7239"
+# whether to gossip known neighbors to neighbors, and to connect neighbors gossiped
+# by neighbors
+gossip-neighbors = true
+
+[rpc]
+# whether respond the runtime of each RPC call
+runtime = false
+
+[dev]
+# whether to enable the pprof web server
+profile = false

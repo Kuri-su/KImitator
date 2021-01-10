@@ -1,0 +1,89 @@
+[
+  {
+    "host": "mixin-node-01.b1.run:7239"
+  },
+  {
+    "host": "mixin-node-02.b1.run:7239"
+  },
+  {
+    "host": "mixin-node-03.b1.run:7239"
+  },
+  {
+    "host": "mixin-node-04.b1.run:7239"
+  },
+  {
+    "host": "mixin-node-05.b1.run:7239"
+  },
+  {
+    "host": "mixin-node-07.b1.run:7239"
+  },
+  {
+    "host": "mixin-node.matpool.io:7239"
+  },
+  {
+    "host": "35.188.235.212:7239"
+  },
+  {
+    "host": "mixin-node0.exinpool.com:7239"
+  },
+  {
+    "host": "mixin-node0.eoslaomao.com:443"
+  },
+  {
+    "host": "mixin-node1.eoslaomao.com:443"
+  },
+  {
+    "host": "node-box.f1ex.io:7239"
+  },
+  {
+    "host": "node-candy.f1ex.io:7239"
+  },
+  {
+    "host": "node-42.f1ex.io:7239"
+  },
+  {
+    "host": "35.234.74.25:7239"
+  },
+  {
+    "host": "35.234.96.182:7239"
+  },
+  {
+    "host": "35.188.242.130:7239"
+  },
+  {
+    "host": "35.245.207.174:7239"
+  },
+  {
+    "host": "35.185.16.229:7239"
+  },
+  {
+    "host": "mixin-node-01.poolin.com:7239"
+  },
+  {
+    "host": "35.227.72.6:7239"
+  },
+  {
+    "host": "35.237.226.29:7239"
+  },
+  {
+    "host": "34.83.129.200:7239"
+  },
+  {
+    "host": "35.233.138.56:7239"
+  },
+  {
+    "host": "34.66.213.188:7239"
+  },
+  {
+    "host": "13.58.51.38:7239"
+  },
+  {
+    "host": "18.224.233.177:7239"
+  },
+  {
+    "host": "3.15.58.214:7239"
+  },
+  {
+    "host": "mixin-node1.exinpool.com:7239"
+  }
+]
