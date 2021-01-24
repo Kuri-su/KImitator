@@ -60,6 +60,8 @@ type CNode struct {
 }
 
 func SetupNode(custom *config.Custom, persistStore storage.Store, cacheStore *fastcache.Cache, addr string, dir string) (*Node, error) {
+	// persistStore 是 持久化存储
+	// cacheStore 是 临时存储
 	err := persistStore.TryToMigrateNodeStateQueue()
 	if err != nil {
 		return nil, err

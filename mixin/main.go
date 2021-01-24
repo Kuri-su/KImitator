@@ -512,7 +512,7 @@ func main() {
 	}
 }
 
-// 和 kernelCmd 一样, 会启动节点
+// 和 kernelCmd 一样, 会启动节点, 但是看起来会从别的节点拉取数据
 func cloneCmd(c *cli.Context) error {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 

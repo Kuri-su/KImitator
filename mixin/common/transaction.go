@@ -45,9 +45,9 @@ const (
 type Input struct {
 	Hash    crypto.Hash  `json:"hash,omitempty"`
 	Index   int          `json:"index,omitempty"`
-	Genesis []byte       `json:"genesis,omitempty"`
-	Deposit *DepositData `json:"deposit,omitempty"`
-	Mint    *MintData    `json:"mint,omitempty"`
+	Genesis []byte       `json:"genesis,omitempty"` // 创世节点的时候会用到
+	Deposit *DepositData `json:"deposit,omitempty"` // Domain 转账会用到
+	Mint    *MintData    `json:"mint,omitempty"`    // 铸币的时候会用到, 发送给别的节点
 }
 
 type Output struct {
