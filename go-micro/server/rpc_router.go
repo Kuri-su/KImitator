@@ -404,6 +404,7 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 	// we can still recover and move on to the next request.
 	keepReading = true
 
+	// Endpoint(serviceMethod) 的 0 是 结构体名, 1 是 方法名
 	serviceMethod := strings.Split(req.msg.Endpoint, ".")
 	if len(serviceMethod) != 2 {
 		err = errors.New("rpc: service/endpoint request ill-formed: " + req.msg.Endpoint)
@@ -411,13 +412,13 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 	}
 	// Look up the request.
 	router.mu.Lock()
-	service = router.serviceMap[serviceMethod[0]]
+	service = router.serviceMap[serviceMethod[0]] // 预先已经注册到 route 里的 service
 	router.mu.Unlock()
 	if service == nil {
 		err = errors.New("rpc: can't find service " + serviceMethod[0])
 		return
 	}
-	mtype = service.method[serviceMethod[1]]
+	mtype = service.method[serviceMethod[1]] //
 	if mtype == nil {
 		err = errors.New("rpc: can't find method " + serviceMethod[1])
 	}
@@ -478,6 +479,7 @@ func (router *router) Handle(h Handler) error {
 // ServeRequest
 func (router *router) ServeRequest(ctx context.Context, r Request, rsp Response) error {
 	sending := new(sync.Mutex)
+	// 返回的全部都是 反射的数据
 	service, mtype, req, argv, replyv, keepReading, err := router.readRequest(r)
 	if err != nil {
 		if !keepReading {
